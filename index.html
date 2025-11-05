@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🔢 序号填写表单（13行竖排）</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh;padding:8px;
+      display:flex;justify-content:center;align-items:flex-start;
+    }
+    .container{
+      width:100%;
+      max-width:720px;
+      background:white;
+      border-radius:12px;
+      padding:10px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1{text-align:center;color:#333;margin-bottom:10px;font-size:17px;}
+    .grid{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+    .row{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;align-items:center;}
+    .row.compact{
+      grid-template-columns:repeat(5,1fr);
+      gap:2px;
+    }
+    /* ✅ 专门优化第1行（含49）布局，避免手机端遮挡 */
+    .row.compact .input-item label {
+      font-size: 12px;
+      min-width: 14px;
+    }
+    .row.compact .input-item input[type="text"] {
+      font-size: 10px;
+      max-width: 38px;
+      padding: 2px;
+    }
+
+    .row-header{display:flex;align-items:center;gap:5px;margin-bottom:3px;padding:3px 6px;background:#f3f4f6;border-radius:6px;}
+    .row-header input[type="checkbox"]{width:15px;height:15px;cursor:pointer;}
+    .row-header label{font-size:13px;font-weight:600;color:#333;cursor:pointer;}
+    .input-item{
+      display:flex;
+      align-items:center;
+      gap:3px;
+      background:#f9fafb;
+      padding:3px;
+      border-radius:6px;
+      border:1.8px solid #e5e7eb;
+      transition:all .2s;
+    }
+    .input-item:hover{border-color:#667eea;box-shadow:0 2px 8px rgba(102,126,234,0.12);}
+    .input-item .sel-box{width:14px;height:14px;cursor:pointer;flex-shrink:0;}
+    .input-group.red label{color:#ef4444;font-weight:700;}
+    .input-group.blue label{color:#3b82f6;font-weight:700;}
+    .input-group.green label{color:#10b981;font-weight:700;}
+    .input-item label{font-size:13px;font-weight:700;min-width:18px;text-align:center;flex-shrink:0;color:#111;}
+    .input-item input[type="text"]{
+      flex:1;min-width:0;text-align:center;
+      padding:3px 2px;border:1.8px solid #e0e0e0;
+      border-radius:5px;font-size:11px;font-weight:500;
+      max-width:60px;
+    }
+    .input-item input[type="text"]:focus{
+      outline:none;border-color:#667eea;box-shadow:0 0 0 2px rgba(102,126,234,0.15);
+    }
+
+    .button-group{
+      text-align:center;
+      display:flex;
+      gap:8px;
+      justify-content:center;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:8px;
+    }
+
+    button{
+      padding:8px 14px;font-size:13px;
+      border:none;border-radius:8px;
+      cursor:pointer;font-weight:600;transition:all .25s;
+    }
+    button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+    .copy-btn{background:#667eea;color:white;}
+    .copy-btn:hover{background:#5568d3;}
+    .clear-btn{background:#ef4444;color:white;}
+    .clear-btn:hover{background:#dc2626;}
+    .bulk-btn{background:#10b981;color:white;}
+    .bulk-btn:hover{background:#0ea46f;}
+    .toast{
+      position:fixed;top:20px;right:20px;background:#10b981;color:white;
+      padding:8px 16px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.3);
+      display:none;font-weight:600;animation:slideIn .3s ease-out;z-index:1000;font-size:13px;
+    }
+    .toast.show{display:block;}
+    @keyframes slideIn{from{transform:translateX(400px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    /* 弹窗样式 */
+    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);justify-content:center;align-items:center;z-index:999;}
+    .modal.show{display:flex;}
+    .modal-content{
+      background:white;padding:16px;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,0.3);
+      max-width:92%;width:320px;
+    }
+    .modal-title{font-size:15px;font-weight:700;margin-bottom:10px;text-align:center;color:#333;}
+    .modal-row{margin-bottom:8px;}
+    .modal-row label{display:block;margin-bottom:4px;font-size:12px;font-weight:600;color:#555;}
+    .modal-row input[type="number"],.modal-row select{
+      width:100%;padding:6px;border:1.8px solid #e0e0e0;border-radius:6px;font-size:13px;text-align:center;
+    }
+    .modal-buttons{display:flex;gap:6px;margin-top:8px;}
+    .modal-buttons button{flex:1;padding:8px;font-size:13px;}
+    .modal-cancel{background:#9ca3af;color:white;}
+    .modal-confirm{background:#667eea;color:white;}
+    .mode-select {display:flex;align-items:center;gap:8px;}
+    .mode-select label {font-size:13px;color:#333;font-weight:600;cursor:pointer;}
+    .mode-select input[type="radio"] {margin-right:4px;width:15px;height:15px;cursor:pointer;}
+    .minus-option {display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#333;cursor:pointer;}
+    #previewBox {
+      width:100%;height:100px;border:1.8px solid #ccc;border-radius:8px;
+      padding:6px;font-size:12px;font-family:monospace;resize:vertical;white-space:pre-wrap;
+    }
+
+    /* ✅ 移动端优化 */
+    @media (max-width:480px){
+      .row.compact{gap:1px;}
+      .input-item input[type="text"]{max-width:45px;}
+      .input-item label{font-size:12px;}
+      h1{font-size:15px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔢 序号填写表单（13行竖排布局）</h1>
+    <div class="grid" id="inputGrid"></div>
+
+    <div class="button-group">
+      <div class="mode-select">
+        <label><input type="radio" name="mode" value="A" checked> 港货店</label>
+        <label><input type="radio" name="mode" value="B"> 澳门店</label>
+      </div>
+      <label class="minus-option"><input type="checkbox" id="addMinus">数字前加“-”号</label>
+      <button class="bulk-btn" onclick="openBulkModal()">📥 批量输入</button>
+      <button class="copy-btn" onclick="copyAll()">📋 一键复制</button>
+      <button class="clear-btn" onclick="clearAll()">🗑️ 清空所有</button>
+    </div>
+
+    <textarea id="previewBox" placeholder="复制后内容会显示在这里，换行会自动转为空格方便核对"></textarea>
+  </div>
+
+  <!-- 批量输入弹窗 -->
+  <div class="modal" id="bulkModal">
+    <div class="modal-content">
+      <div class="modal-title">批量输入</div>
+      <div class="modal-row">
+        <label>输入数字（可带小数）：</label>
+        <input type="number" id="bulkInput" step="0.01" />
+      </div>
+      <div class="modal-row">
+        <label>填写方式：</label>
+        <select id="bulkSelect">
+          <option value="B">各多少</option>
+          <option value="A">平均分</option>
+        </select>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-cancel" onclick="closeBulkModal()">取消</button>
+        <button class="modal-confirm" onclick="confirmBulkModal()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">✅ 已复制到剪贴板！</div>
+
+  <script>
+    const grid=document.getElementById('inputGrid');
+    const toast=document.getElementById('toast');
+    const bulkModal=document.getElementById('bulkModal');
+    const bulkInput=document.getElementById('bulkInput');
+    const bulkSelect=document.getElementById('bulkSelect');
+    const previewBox=document.getElementById('previewBox');
+    const addMinusBox=document.getElementById('addMinus');
+    const red=[1,2,7,8,12,13,18,19,23,24,29,30,34,35,40,45,46];
+    const blue=[3,4,9,10,14,15,20,25,26,31,36,37,41,42,47,48];
+    const green=[5,6,11,16,17,21,22,27,28,32,33,38,39,43,44,49];
+    const animals=['蛇','龙','兔','虎','牛','鼠','猪','狗','鸡','猴','羊','马'];
+    const colorClass=n=>red.includes(n)?'red':blue.includes(n)?'blue':green.includes(n)?'green':'';
+
+    for(let r=0;r<12;r++){
+      const box=document.createElement('div');
+      const header=document.createElement('div');
+      header.className='row-header';
+      header.innerHTML=`<input type="checkbox" id="cb${r}" onchange="openRowBulk(${r})"><label for="cb${r}">${animals[r]}</label>`;
+      box.appendChild(header);
+      const row=document.createElement('div');
+      row.className='row'; if(r===0)row.classList.add('compact');
+      for(let c=0;c<4;c++){
+        const n=r+1+c*12;if(n>48)break;
+        row.innerHTML+=`<div class="input-item input-group ${colorClass(n)}">
+          <input class="sel-box" type="checkbox" id="sel${n}">
+          <label for="sel${n}">${n}</label>
+          <input id="input${n}" type="text" inputmode="decimal" maxlength="12">
+        </div>`;
+      }
+      if(r===0){
+        const n=49;
+        row.innerHTML+=`<div class="input-item input-group ${colorClass(n)}">
+          <input class="sel-box" type="checkbox" id="sel${n}">
+          <label for="sel${n}">${n}</label>
+          <input id="input${n}" type="text" inputmode="decimal" maxlength="12">
+        </div>`;
+      }
+      box.appendChild(row);grid.appendChild(box);
+    }
+
+    function openRowBulk(row){
+      const cb=document.getElementById(`cb${row}`);
+      if(cb.checked){
+        bulkInput.value='';bulkSelect.value='B';
+        bulkModal.dataset.row=row;
+        bulkModal.classList.add('show');
+      }
+    }
+
+    function openBulkModal(){
+      const selected=getSelectedIndices();
+      if(selected.length===0){alert('请先勾选要批量填写的序号');return;}
+      bulkInput.value='';bulkSelect.value='B';
+      bulkModal.dataset.row='';
+      bulkModal.classList.add('show');
+    }
+
+    function closeBulkModal(){
+      bulkModal.classList.remove('show');
+      const row=bulkModal.dataset.row;
+      if(row!=='')document.getElementById(`cb${row}`).checked=false;
+      bulkModal.dataset.row='';
+    }
+    bulkModal.addEventListener('click',e=>{if(e.target===bulkModal)closeBulkModal();});
+
+    function confirmBulkModal(){
+      const total=parseFloat(bulkInput.value);
+      if(isNaN(total)||total<0){alert('请输入有效数字');return;}
+      const mode=bulkSelect.value;
+      const row=bulkModal.dataset.row;
+      let targets=[];
+      if(row!==''){
+        const r=parseInt(row);
+        for(let c=0;c<4;c++){const n=r+1+c*12;if(n<=49)targets.push(n);}
+        if(r===0)targets.push(49);
+      }else{
+        targets=getSelectedIndices();
+      }
+      const len=targets.length;
+      if(len===0){closeBulkModal();return;}
+      if(mode==='A'){
+        const cents=Math.round(total*100);
+        const base=Math.floor(cents/len);
+        let extra=cents-base*len;
+        for(let i=0;i<len;i++){
+          const idx=targets[i];
+          const v=(base+(i<extra?1:0))/100;
+          document.getElementById(`input${idx}`).value=formatNumber(v);
+        }
+      }else{
+        targets.forEach(idx=>document.getElementById(`input${idx}`).value=formatNumber(total));
+      }
+      targets.forEach(idx=>{
+        const cb=document.getElementById(`sel${idx}`);
+        if(cb)cb.checked=false;
+      });
+      closeBulkModal();
+    }
+
+    function getSelectedIndices(){
+      const arr=[];
+      for(let i=1;i<=49;i++){
+        const cb=document.getElementById(`sel${i}`);
+        if(cb&&cb.checked)arr.push(i);
+      }
+      return arr.sort((a,b)=>a-b);
+    }
+
+    function formatNumber(num){
+      const v=parseFloat(num);
+      if(isNaN(v))return'';
+      const str=v.toFixed(2);
+      return str.endsWith('.00')?String(Math.round(v)):str.replace(/(\.\d)0$/,'$1');
+    }
+
+    async function copyAll(){
+      const mode=document.querySelector('input[name="mode"]:checked').value;
+      const modeText=mode==="A"?"港货店":"澳门店";
+      const addMinus=addMinusBox.checked;
+      let txt=`${modeText}\n`;
+      for(let i=1;i<=49;i++){
+        const v=document.getElementById(`input${i}`).value.trim();
+        if(v){const display=addMinus?`-${v}`:v;txt+=`${i}各${display}\n`;}
+      }
+      const lines=txt.split('\n').filter(l=>l.trim()!=="");
+      if(lines.length<=1){alert('请填写后再复制');return;}
+      previewBox.value=txt.replace(/\n/g,' ');
+      try{await navigator.clipboard.writeText(txt);}catch{
+        const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);
+        ta.select();document.execCommand('copy');ta.remove();
+      }
+      showToast();
+    }
+
+    function clearAll(){
+      if(confirm('确定要清空所有输入吗？')){
+        for(let i=1;i<=49;i++)document.getElementById(`input${i}`).value='';
+        for(let i=1;i<=49;i++){const cb=document.getElementById(`sel${i}`);if(cb)cb.checked=false;}
+        for(let i=0;i<12;i++){document.getElementById(`cb${i}`).checked=false;}
+        previewBox.value='';
+      }
+    }
+
+    function showToast(){toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2000);}
+  </script>
+</body>
+</html>
